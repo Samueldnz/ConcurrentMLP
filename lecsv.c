@@ -6,7 +6,7 @@
 #define ROWS 2000
 #define COLS 6
 #define INPUT_SIZE 5
-#define HIDDEN_SIZE 10
+#define HIDDEN_SIZE 100
 #define OUTPUT_SIZE 1
 #define EPOCHS 1000
 #define LEARNING_RATE 0.1
