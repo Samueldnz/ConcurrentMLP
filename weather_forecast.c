@@ -12,7 +12,7 @@
 
 #define EPOCHS 1000
 #define SAMPLES 2000
-#define LEARNING_RATE 0.1f
+#define LEARNING_RATE 0.05f
 
 
 int main (int argc, char* argv[]) 
@@ -23,16 +23,14 @@ int main (int argc, char* argv[])
     // 
     float** data = read_csv("weather_train.csv");
 
-    // 
-    Neuron hidden_layer[HIDDEN_SIZE];
-    for (int i = 0; i < HIDDEN_SIZE; i++) 
-    {
-        init_neuron_weights(&hidden_layer[i], INPUT_SIZE, -1.0f, 1.0f);
-    }
-
     //
-    Neuron output_neuron;
-    init_neuron_weights(&output_neuron, HIDDEN_SIZE, -1.0f, 1.0f);
+    Layer i;
+    Layer h1;
+    Layer o;
+
+    init_layer(&i, INPUT_SIZE, 0, NULL, NULL);
+    init_layer(&h1, HIDDEN_SIZE, INPUT_SIZE, Leaky_ReLU, derivative_Leaky_ReLU);
+    init_layer(&o, OUTPUT_SIZE, HIDDEN_SIZE, sigmoid, derivative_sigmoid);
 
     for (int epoch = 0; epoch < EPOCHS; epoch++) 
     {
@@ -40,50 +38,57 @@ int main (int argc, char* argv[])
 
         for (int s = 0; s < SAMPLES; s++) 
         {
+            set_input_layer(&i, data[s]);
+
+            forward_layer(&h1, &i);
+
+            forward_layer(&o, &h1);
+
             //
-            for (int i = 0; i < HIDDEN_SIZE; i++) 
+            float d_z[o.N];
+            for (int i = 0; i < o.N; i++) 
             {
-                for (int j = 0; j < INPUT_SIZE; j++) 
+                float error = data[s][INPUT_SIZE + i] - o.neurons[i].s;
+                d_z[i] = -1 * error * derivative_sigmoid(o.neurons[i].s);
+                total_error += (error * error) * 0.5f;
+            }
+
+            for (int n = 0; n < o.N; n++) 
+            {
+                float grad_output[HIDDEN_SIZE + 1];
+                
+                // Gradientes
+                for (int j = 0; j < HIDDEN_SIZE; j++) 
                 {
-                    hidden_layer[i].x[j] = data[s][j];
+                    grad_output[j] = d_z[n] * o.neurons[n].x[j];
                 }
+                grad_output[HIDDEN_SIZE] = d_z[n];
+
+                // Atualiza os pesos do neurônio de saída n
+                update_neuron_weights(&o.neurons[n], grad_output, LEARNING_RATE);
             }
-            for (int i = 0; i < HIDDEN_SIZE; i++) sigmoid(&hidden_layer[i]);
 
             //
             for (int i = 0; i < HIDDEN_SIZE; i++) 
             {
-                output_neuron.x[i] = hidden_layer[i].s;
-            }
-            sigmoid(&output_neuron);
-            
-            // MSE
-            float error = data[s][INPUT_SIZE] - output_neuron.s;
-            total_error += error * error;
+                float sum = 0.0f;
+                for (int j = 0; j < OUTPUT_SIZE; j++) 
+                {
+                    sum += d_z[j] * o.neurons[j].w[i];
+                }
 
-            // 
-            float d_z = error * derivative_sigmoid(output_neuron.s);
-            float grad_output[HIDDEN_SIZE + 1];
-            for (int i = 0; i < HIDDEN_SIZE; i++) 
-            {
-                grad_output[i] = d_z * output_neuron.x[i];
-            }
-            grad_output[HIDDEN_SIZE] = d_z;
-            update_neuron_weights(&output_neuron, grad_output, LEARNING_RATE);
-
-            //
-            for (int i = 0; i < HIDDEN_SIZE; i++) 
-            {
-                float d_hidden = d_z * output_neuron.w[i] * derivative_sigmoid(hidden_layer[i].s);
+                float d_hidden = sum * derivative_Leaky_ReLU(h1.neurons[i].s);
 
                 float grad_hidden[INPUT_SIZE + 1];
+
+                // Gradientes
                 for (int j = 0; j < INPUT_SIZE; j++) 
                 {
-                    grad_hidden[j] = d_hidden * hidden_layer[i].x[j];
+                    grad_hidden[j] = d_hidden * h1.neurons[i].x[j];
                 }
                 grad_hidden[INPUT_SIZE] = d_hidden;
 
-                update_neuron_weights(&hidden_layer[i], grad_hidden, LEARNING_RATE);
+                update_neuron_weights(&h1.neurons[i], grad_hidden, LEARNING_RATE);
             }
         }
         if (epoch % 100 == 0) 
@@ -92,10 +97,7 @@ int main (int argc, char* argv[])
         }
     }
 
-    //
-    for (int i = 0; i < HIDDEN_SIZE; i++) free_neuron(&hidden_layer[i]);
-    free_neuron(&output_neuron);
-    free_matrix(data, 2000);
+    // liberando memoria
 
     return 0;
 }

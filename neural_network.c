@@ -21,6 +21,83 @@ void init_neuron_weights (Neuron* neuron, int num_inputs, float min, float max)
     neuron->b = 0;
 }
 
+void init_layer (Layer* layer, int N, int input_size, void (*activation)(Neuron*), float (*activation_derivative)(float)) 
+{
+    layer->N = N;
+    layer->input_size = input_size;
+    layer->activation = activation;
+    layer->activation_derivative = activation_derivative;
+
+    layer->neurons = (Neuron*) malloc(sizeof(Neuron) * N);
+    for (int i = 0; i < N; i++) 
+    {
+        init_neuron_weights(&layer->neurons[i], input_size, -1.0f, 1.0f);
+    }
+}
+
+void set_input_layer(Layer* layer, float* input) 
+{
+    for (int i = 0; i < layer->N; i++) 
+    {
+        layer->neurons[i].s = input[i];
+    }
+}
+
+void backprop_layer (Layer* current_layer, float* grad_next_layer, Layer* next_layer, float learning_rate, float* grad_current_layer) 
+{
+    for (int i = 0; i < current_layer->N; i++) 
+    {
+        float sum = 0.0f;
+        if (next_layer != NULL) 
+        {
+            for (int k = 0; k < next_layer->N; k++) 
+            {
+                sum += grad_next_layer[k] * next_layer->neurons[k].w[i];
+            }
+        } else {
+            sum = grad_next_layer[i];
+        }
+
+        // derivada da ativação para o neurônio atual
+        float delta = sum * current_layer->activation_derivative(current_layer->neurons[i].s);
+
+        // atualizar pesos da camada atual
+        float grad_weights[current_layer->input_size + 1]; // +1 para bias
+        for (int j = 0; j < current_layer->input_size; j++) {
+            grad_weights[j] = delta * current_layer->neurons[i].x[j];
+        }
+        grad_weights[current_layer->input_size] = delta; // bias
+
+        update_neuron_weights(&current_layer->neurons[i], grad_weights, learning_rate);
+
+        // armazenar gradientes para camada anterior
+        for (int j = 0; j < current_layer->input_size; j++) {
+            grad_current_layer[j] += delta * current_layer->neurons[i].w[j];
+        }
+    }
+}
+
+void forward_layer (Layer* layer, Layer* input) 
+{
+    for (int i = 0; i < layer->N; i++) 
+    {
+        for (int j = 0; j < layer->input_size; j++) 
+        {
+            layer->neurons[i].x[j] = input->neurons[j].s;
+        }
+        layer->activation(&layer->neurons[i]);
+    }
+}
+
+void free_layer (Layer* layer) 
+{
+    for (int i = 0; i < layer->N; i++) 
+    {
+        free_neuron(&layer->neurons[i]);
+    }
+    free(layer->neurons);
+}
+
 void update_neuron_weights (Neuron* neuron, float* gradientes, float learning_rate) 
 {
     for (int i = 0; i < neuron->N; i++) 
@@ -48,9 +125,9 @@ void ReLU (Neuron* neuron)
 
     neuron->s = neuron->z > 0 ? neuron->z : 0.0f;
 }
-float derivative_ReLU (float z) 
+float derivative_ReLU (float s) 
 {
-    return (z > 0) ? 1.0f : 0.0f;
+    return (s > 0) ? 1.0f : 0.0f;
 }
 
 void sigmoid (Neuron* neuron) 
@@ -59,9 +136,9 @@ void sigmoid (Neuron* neuron)
 
     neuron->s = 1.0f / (1.0f + expf(-neuron->z));
 }
-float derivative_sigmoid (float z)
+float derivative_sigmoid (float s)
 {
-    return z * (1.0f - z);
+    return s * (1.0f - s);
 }
 
 void Leaky_ReLU (Neuron* neuron) 
@@ -70,7 +147,7 @@ void Leaky_ReLU (Neuron* neuron)
 
     neuron->s = neuron->z > 0 ? neuron->z : 0.01f * neuron->z;
 }
-float derivative_Leaky_ReLU (float z) 
+float derivative_Leaky_ReLU (float s) 
 {
-    return (z > 0) ? 1.0f : 0.01f;
+    return (s > 0) ? 1.0f : 0.01f;
 }
