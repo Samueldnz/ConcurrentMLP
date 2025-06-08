@@ -1,30 +1,18 @@
-# Nome do executável final
-TARGET = ml_program
-
-# Compilador e flags
 CC = gcc
 CFLAGS = -Wall
-LDFLAGS = -lm
+OBJ = main.o neural_network.o
+TARGET = neural_net
 
-# Arquivos fonte
-SRCS = main.c data.c network.c
-
-# Arquivos objeto
-OBJS = $(SRCS:.c=.o)
-
-# Regra principal
 all: $(TARGET)
 
-# Como compilar o executável
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ -lm
 
-# Regra para remover os arquivos compilados
+main.o: main.c neural_network.h
+	$(CC) $(CFLAGS) -c main.c
+
+neural_network.o: neural_network.c neural_network.h
+	$(CC) $(CFLAGS) -c neural_network.c
+
 clean:
-	rm -f $(OBJS) $(TARGET)
-
-# Regra de compilação para arquivos .c -> .o
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-.PHONY: all clean
+	rm -f *.o $(TARGET)
