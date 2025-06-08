@@ -1,8 +1,8 @@
 # Nome do executavel final
-EXEC = rede_neural
+EXEC = weather_forecast
 
 # Lista dos arquivos necessarios no compilamento 
-SRCS = rede_neural.c activation_function.c
+SRCS = weather_forecast.c neural_network.c matrix.c
 
 # Nome dos executaveis com mesmo nome dos arquivos-geradores
 OBJS = $(SRCS:.c=.o)

@@ -24,8 +24,35 @@ static int rows_count (const char* file_name)
     return rows;
 }
 
+static int columns_count (const char* file_name) 
+{
+    FILE* file = fopen(file_name, "r");
+    if (!file) 
+    {
+        perror("Erro ao abrir arquivo");
+        exit(1);
+    }
 
-float** malloc_matrix (int rows, int columns) 
+    int columns = 0;
+    char row[MAX_LEN];
+    if (fgets(row, sizeof(row), file)) 
+    {
+        char* token = strtok(row, ",\n");
+        while (token) 
+        {
+            columns++;
+            token = strtok(NULL, ",\n");
+        }
+    } else {
+        fprintf(stderr, "Erro: file_name inexistente ou vazio\n");
+        exit(1);
+    }
+    fclose(file);
+
+    return columns;
+}
+
+static float** malloc_matrix (int rows, int columns) 
 {
     float** matriz = malloc(rows * sizeof(float*));
     if (!matriz) 
@@ -47,21 +74,22 @@ float** malloc_matrix (int rows, int columns)
     return matriz;
 }
 
-void free_matrix (float** matriz, int linhas) 
+void free_matrix (float** matriz, int rows) 
 {
-    for (int i = 0; i < linhas; i++) free(matriz[i]);
+    for (int i = 0; i < rows; i++) free(matriz[i]);
 
     free(matriz);
 }
 
-float** read_csv (const char* file_name, int columns) 
+float** read_csv (const char* file_name) 
 {
     int rows = rows_count(file_name);
+    int columns = columns_count(file_name);
 
-    float** matriz = alocar_matriz(rows, columns);
+    float** matriz = malloc_matrix(rows, columns);
 
     FILE* file = fopen(file_name, "r");
-    if (!file) 
+    if (!file)
     {
         perror("Erro: fopen() do arquivo");
         exit(1);
