@@ -77,7 +77,7 @@ void backprop_layer (Layer* current_layer, float* grad_next_layer, Layer* next_l
     }
 }
 
-void forward_layer (Layer* layer, Layer* input) 
+void forward_pass (Layer* layer, Layer* input) 
 {
     for (int i = 0; i < layer->N; i++) 
     {
@@ -119,6 +119,7 @@ static void calc_z (Neuron* neuron)
     neuron->z = soma;
 }
 
+// thread-safe
 void ReLU (Neuron* neuron) 
 {
     calc_z(neuron);
@@ -130,6 +131,7 @@ float derivative_ReLU (float s)
     return (s > 0) ? 1.0f : 0.0f;
 }
 
+// thread-safe
 void sigmoid (Neuron* neuron) 
 {
     calc_z(neuron);
@@ -141,6 +143,7 @@ float derivative_sigmoid (float s)
     return s * (1.0f - s);
 }
 
+// thread-safe
 void Leaky_ReLU (Neuron* neuron) 
 {
     calc_z(neuron);

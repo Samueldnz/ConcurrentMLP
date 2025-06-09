@@ -41,7 +41,7 @@ struct layer
 void init_layer(Layer* layer, int N, int input_size, void (*activation)(Neuron*), float (*activation_derivative)(float));
 void set_input_layer(Layer* layer, float* input);
 void backprop_layer (Layer* current_layer, float* grad_next_layer, Layer* next_layer, float learning_rate, float* grad_current_layer);
-void forward_layer (Layer* layer, Layer* input);
+void forward_pass (Layer* layer, Layer* input);
 
 void ReLU (Neuron* neuron);
 float derivative_ReLU (float s);
