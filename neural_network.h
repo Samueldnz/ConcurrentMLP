@@ -5,43 +5,52 @@
 typedef struct neuron Neuron;
 struct neuron 
 {
+    // numero de entradas
     int N;
     
     // bias
+    float d_b;
     float b;
 
-    // weights
+    // vetor de pesos
+    float* d_w;
     float* w;
 
-    // inputs
+    // vetor de entradas
     float* x;
 
-    // unactivated output
+    // saida inativada
     float z;
 
-    // activated output
+    // saida ativada
+    float d_s;
     float s;
 };
 
 typedef struct layer Layer;
-struct layer
+struct layer 
 {
-    // number of neurons
-    int N;
+    // numero de neuronios
+    int n;
 
-    // number of inputs
-    int input_size;
+    // activation function
     void (*activation)(Neuron*);
     float (*activation_derivative)(float);
 
-    // neurons vector
+    // vetor de neuronios
     Neuron* neurons;
 };
 
-void init_layer(Layer* layer, int N, int input_size, void (*activation)(Neuron*), float (*activation_derivative)(float));
-void set_input_layer(Layer* layer, float* input);
-void backprop_layer (Layer* current_layer, float* grad_next_layer, Layer* next_layer, float learning_rate, float* grad_current_layer);
+void init_layer (Layer* layer, int N, int n, void (*activation)(Neuron*), float (*activation_derivative)(float));
+void free_layer (Layer* layer);
+
+void set_input_layer (Layer* i, float* input);
 void forward_pass (Layer* layer, Layer* input);
+void update_neuron_weights(Neuron* neuron, float learning_rate);
+void model_metrics(float** data, int samples, Layer* layers[], int num_layers, double total);
+
+void h_backward_pass (Layer* h, Layer* n, float eta);
+void o_backward_pass (Layer* o, float eta, float* target, float* total_error);
 
 void ReLU (Neuron* neuron);
 float derivative_ReLU (float s);
@@ -51,7 +60,3 @@ float derivative_sigmoid (float s);
 
 void Leaky_ReLU (Neuron* neuron);
 float derivative_Leaky_ReLU (float s);
-
-void free_neuron (Neuron* neuron);
-void init_neuron_weights (Neuron* neuron, int num_inputs, float min, float max);
-void update_neuron_weights (Neuron* neuron, float* gradientes, float learning_rate);
