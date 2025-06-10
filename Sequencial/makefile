@@ -1,18 +1,24 @@
+# Nome do executavel final
+EXEC = weather_forecast
+
+# Lista dos arquivos necessarios no compilamento 
+SRCS = weather_forecast.c neural_network.c matrix.c
+
+# Nome dos executaveis com mesmo nome dos arquivos-geradores
+OBJS = $(SRCS:.c=.o)
+
+# flags
 CC = gcc
-CFLAGS = -Wall
-OBJ = main.o neural_network.o
-TARGET = neural_net
+CFLAGS = -Wall -g
 
-all: $(TARGET)
+# Regra padrão
+all: $(EXEC)
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ -lm
 
-main.o: main.c neural_network.h
-	$(CC) $(CFLAGS) -c main.c
+# Comando: make
+$(EXEC): $(OBJS)
+	$(CC) $(OBJS) -o $(EXEC) -lm
 
-neural_network.o: neural_network.c neural_network.h
-	$(CC) $(CFLAGS) -c neural_network.c
-
+# Comando: make clean
 clean:
-	rm -f *.o $(TARGET)
+	rm -f $(OBJS) $(EXEC)

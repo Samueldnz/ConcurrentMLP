@@ -1,38 +1,62 @@
-#ifndef NEURAL_NETWORK_H
-#define NEURAL_NETWORK_H
+#include <stdlib.h>
+#include <stdio.h>
 
-typedef struct {
-    int N;         // Número de entradas
-    float *w;      // Pesos
-    float *x;      // Entradas
-    float b;       // Bias
-    float z;       // Soma ponderada
-    float s;       // Saída ativada
-} Neuron;
 
-#define ROWS 2000
-#define COLS 6
-#define INPUT_SIZE 5
-#define HIDDEN_SIZE 100
-#define OUTPUT_SIZE 1
-#define EPOCHS 1000
-#define LEARNING_RATE 0.1f
-#define SAMPLES 2000
+typedef struct neuron Neuron;
+struct neuron 
+{
+    // numero de entradas
+    int N;
+    
+    // bias
+    float d_b;
+    float b;
 
-void init_neuron_weights(Neuron* neuron, int num_inputs, float min, float max);
-void update_neuron_weights(Neuron* neuron, float* gradientes, float learning_rate);
-void free_neuron(Neuron* neuron);
+    // vetor de pesos
+    float* d_w;
+    float* w;
 
-void sigmoid(Neuron* neuron);
-float derivative_sigmoid(float s);
+    // vetor de entradas
+    float* x;
 
-void ReLU(Neuron* neuron);
-float derivative_ReLU(float z);
+    // saida inativada
+    float z;
 
-void Leaky_ReLU(Neuron* neuron);
-float derivative_Leaky_ReLU(float z);
+    // saida ativada
+    float d_s;
+    float s;
+};
 
-float forward_pass(float input[INPUT_SIZE], Neuron hidden[HIDDEN_SIZE], Neuron *output);
-void backpropagation(float input[INPUT_SIZE], float target, Neuron hidden[HIDDEN_SIZE], Neuron *output);
+typedef struct layer Layer;
+struct layer 
+{
+    // numero de neuronios
+    int n;
 
-#endif
+    // activation function
+    void (*activation)(Neuron*);
+    float (*activation_derivative)(float);
+
+    // vetor de neuronios
+    Neuron* neurons;
+};
+
+void init_layer (Layer* layer, int N, int n, void (*activation)(Neuron*), float (*activation_derivative)(float));
+void free_layer (Layer* layer);
+
+void set_input_layer (Layer* i, float* input);
+void forward_pass (Layer* layer, Layer* input);
+void update_neuron_weights(Neuron* neuron, float learning_rate);
+void model_metrics(float** data, int samples, Layer* layers[], int num_layers, double total);
+
+void h_backward_pass (Layer* h, Layer* n, float eta);
+void o_backward_pass (Layer* o, float eta, float* target, float* total_error);
+
+void ReLU (Neuron* neuron);
+float derivative_ReLU (float s);
+
+void sigmoid (Neuron* neuron);
+float derivative_sigmoid (float s);
+
+void Leaky_ReLU (Neuron* neuron);
+float derivative_Leaky_ReLU (float s);
